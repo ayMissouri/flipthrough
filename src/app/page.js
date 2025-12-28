@@ -9,7 +9,7 @@ export default function Home() {
   const [totalArtworks, setTotalArtworks] = useState(0);
   const [trail, setTrail] = useState([]);
   const [selectedArtwork, setSelectedArtwork] = useState(null);
-  
+
   const lastSpawnPos = useRef({ x: 0, y: 0 });
   const isFetching = useRef(false);
   const trailRef = useRef([]);
@@ -27,78 +27,77 @@ export default function Home() {
     init();
   }, []);
 
-  const handleMouseMove = useCallback(async (e) => {
-    if (totalArtworks === 0) return;
+  const handleMouseMove = useCallback(
+    async (e) => {
+      if (totalArtworks === 0) return;
 
-    const currentX = e.clientX;
-    const currentY = e.clientY;
+      const currentX = e.clientX;
+      const currentY = e.clientY;
 
-    const dx = currentX - lastSpawnPos.current.x;
-    const dy = currentY - lastSpawnPos.current.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+      const dx = currentX - lastSpawnPos.current.x;
+      const dy = currentY - lastSpawnPos.current.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
 
-    if (distance > MOUSE_MOVE_THRESHOLD) {
-      lastSpawnPos.current = { x: currentX, y: currentY };
+      if (distance > MOUSE_MOVE_THRESHOLD) {
+        lastSpawnPos.current = { x: currentX, y: currentY };
 
-      if (isFetching.current) return;
-      isFetching.current = true;
+        if (isFetching.current) return;
+        isFetching.current = true;
 
-      try {
-        const artwork = await getRandomArtwork(totalArtworks);
-        
-        if (artwork) {
+        try {
+          const artwork = await getRandomArtwork(totalArtworks);
+
+          if (artwork) {
             const newTrailItem = {
-                ...artwork,
-                x: currentX,
-                y: currentY,
-                rotation: Math.random() * 20 - 10,
-                zIndex: Date.now(),
-                id: `${artwork.id}-${Date.now()}`
+              ...artwork,
+              x: currentX,
+              y: currentY,
+              rotation: Math.random() * 20 - 10,
+              zIndex: Date.now(),
+              id: `${artwork.id}-${Date.now()}`,
             };
 
-            setTrail(prev => {
-                const newTrail = [...prev, newTrailItem];
-                if (newTrail.length > TRAIL_BUFFER_SIZE) {
-                    return newTrail.slice(newTrail.length - TRAIL_BUFFER_SIZE);
-                }
-                return newTrail;
+            setTrail((prev) => {
+              const newTrail = [...prev, newTrailItem];
+              if (newTrail.length > TRAIL_BUFFER_SIZE) {
+                return newTrail.slice(newTrail.length - TRAIL_BUFFER_SIZE);
+              }
+              return newTrail;
             });
+          }
+        } catch (err) {
+          console.error('Error in trail generation:', err);
+        } finally {
+          isFetching.current = false;
         }
-      } catch (err) {
-        console.error("Error in trail generation:", err);
-      } finally {
-        isFetching.current = false;
       }
-    }
-  }, [totalArtworks]);
+    },
+    [totalArtworks]
+  );
 
   const handleArtworkClick = (artwork) => {
-    console.log("Clicked artwork:", artwork);
+    console.log('Clicked artwork:', artwork);
     setSelectedArtwork(artwork);
   };
 
   return (
-    <main 
-        className="relative w-full h-screen overflow-hidden bg-white dark:bg-black text-black dark:text-white cursor-crosshair"
-        onMouseMove={handleMouseMove}
-    >
+    <main
+      className='relative w-full h-screen overflow-hidden bg-white dark:bg-black text-black dark:text-white cursor-crosshair'
+      onMouseMove={handleMouseMove}>
       {trail.map((item, index) => (
-        <TrailItem 
-            key={item.id} 
-            artwork={item} 
-            isTopMost={index === trail.length - 1}
-            onClick={handleArtworkClick}
-        />
+        <TrailItem key={item.id} artwork={item} isTopMost={index === trail.length - 1} onClick={handleArtworkClick} />
       ))}
 
       {selectedArtwork && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setSelectedArtwork(null)}>
-              <div className="bg-white p-4 rounded" onClick={e => e.stopPropagation()}>
-                  <h2 className="text-xl font-bold">{selectedArtwork.title}</h2>
-                  <p>Placeholder Detail View</p>
-                  <button onClick={() => setSelectedArtwork(null)}>Close</button>
-              </div>
+        <div
+          className='fixed inset-0 z-50 flex items-center justify-center bg-black/50'
+          onClick={() => setSelectedArtwork(null)}>
+          <div className='bg-white p-4 rounded' onClick={(e) => e.stopPropagation()}>
+            <h2 className='text-xl font-bold'>{selectedArtwork.title}</h2>
+            <p>Placeholder Detail View</p>
+            <button onClick={() => setSelectedArtwork(null)}>Close</button>
           </div>
+        </div>
       )}
     </main>
   );
